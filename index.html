@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Docker Stack Builder - Generator docker-compose.yml</title>
+  <meta name="description" content="Dashboard interactivo para administradores de sistemas y DevOps. Genera tus archivos docker-compose.yml en tiempo real.">
+  
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            slate: {
+              850: '#131e32',
+              950: '#090d16',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts & FontAwesome Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Prism Syntax Highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <style>
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+
+    /* Terminal background custom styling */
+    pre[class*="language-"] {
+      margin: 0 !important;
+      border-radius: 0 0 0.75rem 0.75rem !important;
+      background: #090d16 !important;
+      font-size: 0.875rem !important;
+      line-height: 1.5 !important;
+    }
+    
+    .glow-amber {
+      box-shadow: 0 0 20px -3px rgba(251, 191, 36, 0.35);
+    }
+
+    .pulse-green {
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+      animation: pulseGreen 2s infinite;
+    }
+
+    @keyframes pulseGreen {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen antialiased flex flex-col selection:bg-cyan-500 selection:text-slate-950">
+
+  <!-- ================= HEADER ================= -->
+  <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-4">
+      
+      <!-- Title & Branding -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-slate-950 font-black text-xl shadow-md shadow-cyan-500/20">
+          <i class="fa-brands fa-docker text-slate-950 text-2xl"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-xl font-bold tracking-tight text-white">Docker Stack Builder</h1>
+            <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800/60">v2.4 Live</span>
+          </div>
+          <p class="text-xs text-slate-400 font-medium">Generador de docker-compose.yml en tiempo real para SysAdmins</p>
+        </div>
+      </div>
+
+      <!-- Actions Header -->
+      <div class="flex items-center gap-3">
+        <button id="coffeeBtn" onclick="openModal()" class="glow-amber bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-4 py-2 rounded-xl text-sm transition-all duration-200 flex items-center gap-2 transform hover:-translate-y-0.5 active:translate-y-0 shadow-md">
+          <i class="fa-solid fa-mug-hot text-base text-amber-900"></i>
+          <span>Invítame a un café</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= MAIN CONTENT ================= -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    
+    <!-- Top info bar -->
+    <div class="mb-6 p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-green"></span>
+        <span class="text-sm font-medium text-slate-300">Selecciona tus servicios, personaliza sus puertos y obtén el YAML listo para producción.</span>
+      </div>
+      <div class="flex items-center gap-2 text-xs text-slate-400">
+        <i class="fa-solid fa-layer-group text-cyan-400"></i>
+        <span id="selectedCount">0 servicios seleccionados</span>
+      </div>
+    </div>
+
+    <!-- Main 2-Column Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+      <!-- ================= LEFT COLUMN: SERVICES LIST ================= -->
+      <section class="lg:col-span-7 space-y-4">
+        
+        <!-- Search & Filter Header -->
+        <div class="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-3">
+          <div class="flex flex-col sm:flex-row gap-3 items-center justify-between">
+            <div class="relative w-full">
+              <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
+              <input type="text" id="searchInput" oninput="filterServices()" placeholder="Buscar servicio (ej. postgres, nginx, uptime)..." 
+                class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-sm rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors">
+            </div>
+            <button onclick="selectAll(true)" class="text-xs text-slate-400 hover:text-cyan-400 transition-colors whitespace-nowrap px-3 py-2 rounded-lg bg-slate-800/60 border border-slate-700/50 hover:bg-slate-800">
+              <i class="fa-solid fa-check-double mr-1"></i> Seleccionar todos
+            </button>
+            <button onclick="selectAll(false)" class="text-xs text-slate-400 hover:text-rose-400 transition-colors whitespace-nowrap px-3 py-2 rounded-lg bg-slate-800/60 border border-slate-700/50 hover:bg-slate-800">
+              <i class="fa-solid fa-xmark mr-1"></i> Desmarcar
+            </button>
+          </div>
+
+          <!-- Category Badges -->
+          <div class="flex flex-wrap gap-1.5 pt-1" id="categoryFilters">
+            <button onclick="setCategory('all')" class="cat-btn active px-3 py-1 text-xs font-medium rounded-lg bg-cyan-950 text-cyan-400 border border-cyan-800/80 transition-all">Todos</button>
+            <button onclick="setCategory('web')" class="cat-btn px-3 py-1 text-xs font-medium rounded-lg bg-slate-800 text-slate-400 border border-slate-700/60 hover:text-slate-200 transition-all">Web & Proxy</button>
+            <button onclick="setCategory('database')" class="cat-btn px-3 py-1 text-xs font-medium rounded-lg bg-slate-800 text-slate-400 border border-slate-700/60 hover:text-slate-200 transition-all">Bases de Datos</button>
+            <button onclick="setCategory('monitoring')" class="cat-btn px-3 py-1 text-xs font-medium rounded-lg bg-slate-800 text-slate-400 border border-slate-700/60 hover:text-slate-200 transition-all">Monitoreo</button>
+            <button onclick="setCategory('tools')" class="cat-btn px-3 py-1 text-xs font-medium rounded-lg bg-slate-800 text-slate-400 border border-slate-700/60 hover:text-slate-200 transition-all">Herramientas</button>
+          </div>
+        </div>
+
+        <!-- Services Cards List -->
+        <div class="space-y-3" id="servicesContainer">
+          <!-- Services rendered dynamically by JS -->
+        </div>
+
+      </section>
+
+
+      <!-- ================= RIGHT COLUMN: CODE TERMINAL PREVIEW ================= -->
+      <section class="lg:col-span-5 sticky top-20">
+        <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden shadow-2xl">
+          
+          <!-- Terminal Window Header Bar -->
+          <div class="bg-slate-950 px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-rose-500/80 inline-block"></span>
+              <span class="w-3 h-3 rounded-full bg-amber-500/80 inline-block"></span>
+              <span class="w-3 h-3 rounded-full bg-emerald-500/80 inline-block"></span>
+              <span class="ml-2 font-mono text-xs text-slate-400 font-medium">docker-compose.yml</span>
+            </div>
+
+            <!-- Copy & Download Action Buttons -->
+            <div class="flex items-center gap-2">
+              <button onclick="copyToClipboard()" title="Copiar al portapapeles" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 active:scale-95">
+                <i class="fa-regular fa-copy text-cyan-400"></i>
+                <span id="copyBtnText">Copiar</span>
+              </button>
+              <button onclick="downloadYaml()" title="Descargar docker-compose.yml" class="px-2.5 py-1 bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold rounded-md text-xs transition-colors flex items-center gap-1.5 active:scale-95 shadow-md shadow-cyan-600/20">
+                <i class="fa-solid fa-download text-slate-950"></i>
+                <span>Descargar</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Code Display Container -->
+          <div class="relative">
+            <pre class="overflow-x-auto max-h-[calc(100vh-220px)] p-4 text-xs font-mono text-slate-200"><code id="yamlCode" class="language-yaml"># Cargando stack...</code></pre>
+          </div>
+
+          <!-- Footer Status inside Terminal -->
+          <div class="bg-slate-950/80 px-4 py-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-circle-check text-emerald-400"></i>
+              <span>Sintaxis YAML validada</span>
+            </div>
+            <span>UTF-8 • Compose v3.8</span>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ================= COFFEE DONATION MODAL ================= -->
+  <div id="coffeeModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm transition-opacity duration-300">
+    <div class="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-md w-full p-6 shadow-2xl relative transform transition-all scale-95 opacity-0 modal-card" id="modalCard">
+      
+      <!-- Close X Button -->
+      <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center transition-colors">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <!-- Modal Content -->
+      <div class="text-center space-y-4">
+        
+        <!-- Animated Icon -->
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 text-3xl shadow-lg shadow-amber-400/10">
+          <i class="fa-solid fa-mug-hot animate-bounce"></i>
+        </div>
+
+        <div>
+          <h3 class="text-xl font-bold text-white">¡Apoya el proyecto! ☕</h3>
+          <p class="text-xs text-slate-400 mt-1">Si este generador de Docker Stack te ha ahorrado tiempo en tus servidores, considera invitarme a un café para seguir mejorándolo.</p>
+        </div>
+
+        <!-- Donation Amount Options -->
+        <div class="grid grid-cols-3 gap-2.5 py-2">
+          <button onclick="selectCoffeeAmount(3)" class="coffee-amount-btn py-2.5 rounded-xl bg-slate-800 hover:bg-amber-400 hover:text-slate-950 font-bold border border-slate-700 hover:border-amber-400 text-sm text-slate-200 transition-all flex flex-col items-center gap-0.5">
+            <span>☕ 1 Café</span>
+            <span class="text-xs font-normal opacity-80">$3 USD</span>
+          </button>
+          <button onclick="selectCoffeeAmount(6)" class="coffee-amount-btn active py-2.5 rounded-xl bg-amber-400 text-slate-950 font-bold border border-amber-400 text-sm transition-all flex flex-col items-center gap-0.5 shadow-md shadow-amber-400/20">
+            <span>☕☕ 2 Cafés</span>
+            <span class="text-xs font-semibold opacity-90">$6 USD</span>
+          </button>
+          <button onclick="selectCoffeeAmount(15)" class="coffee-amount-btn py-2.5 rounded-xl bg-slate-800 hover:bg-amber-400 hover:text-slate-950 font-bold border border-slate-700 hover:border-amber-400 text-sm text-slate-200 transition-all flex flex-col items-center gap-0.5">
+            <span>🚀 Super Stack</span>
+            <span class="text-xs font-normal opacity-80">$15 USD</span>
+          </button>
+        </div>
+
+        <!-- Action Button -->
+        <a href="https://buymeacoffee.com" target="_blank" onclick="closeModal()" class="w-full py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-extrabold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-400/20 transform hover:-translate-y-0.5">
+          <i class="fa-solid fa-heart text-rose-700"></i>
+          <span>Invitar un café vía BuyMeACoffee</span>
+        </a>
+
+        <p class="text-[11px] text-slate-500">¡Muchas gracias por apoyar el software Open Source!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TOAST NOTIFICATION CONTAINER ================= -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ================= JAVASCRIPT LOGIC ================= -->
+  <script>
+    // Definition of Docker Services
+    const SERVICES_DATA = [
+      {
+        id: 'nginx',
+        name: 'Nginx',
+        category: 'web',
+        icon: 'fa-server',
+        color: 'text-emerald-400',
+        desc: 'Servidor Web y Proxy Inverso de alto rendimiento.',
+        enabled: true,
+        hostPort: '80',
+        containerPort: '80',
+        containerName: 'nginx-proxy',
+        restart: 'unless-stopped',
+        image: 'nginx:alpine',
+        volumes: ['./html:/usr/share/nginx/html:ro']
+      },
+      {
+        id: 'traefik',
+        name: 'Traefik',
+        category: 'web',
+        icon: 'fa-network-wired',
+        color: 'text-cyan-400',
+        desc: 'Edge router HTTP y proxy inverso moderno para microservicios.',
+        enabled: false,
+        hostPort: '8080',
+        containerPort: '8080',
+        containerName: 'traefik-proxy',
+        restart: 'unless-stopped',
+        image: 'traefik:v2.10',
+        command: '--api.insecure=true --providers.docker=true',
+        volumes: ['/var/run/docker.sock:/var/run/docker.sock:ro']
+      },
+      {
+        id: 'postgres',
+        name: 'PostgreSQL',
+        category: 'database',
+        icon: 'fa-database',
+        color: 'text-blue-400',
+        desc: 'Potente base de datos relacional orientada a objetos.',
+        enabled: true,
+        hostPort: '5432',
+        containerPort: '5432',
+        containerName: 'postgres-db',
+        restart: 'always',
+        image: 'postgres:16-alpine',
+        env: {
+          POSTGRES_USER: 'sysadmin',
+          POSTGRES_PASSWORD: 'ChangeMeSecret123!',
+          POSTGRES_DB: 'app_db'
+        },
+        volumes: ['pgdata:/var/lib/postgresql/data']
+      },
+      {
+        id: 'mysql',
+        name: 'MySQL / MariaDB',
+        category: 'database',
+        icon: 'fa-database',
+        color: 'text-amber-400',
+        desc: 'Sistema de gestión de bases de datos relacional popular.',
+        enabled: false,
+        hostPort: '3306',
+        containerPort: '3306',
+        containerName: 'mysql-db',
+        restart: 'unless-stopped',
+        image: 'mysql:8.0',
+        env: {
+          MYSQL_ROOT_PASSWORD: 'RootPassword123!',
+          MYSQL_DATABASE: 'mydb',
+          MYSQL_USER: 'dbuser',
+          MYSQL_PASSWORD: 'userpass'
+        },
+        volumes: ['mysqldata:/var/lib/mysql']
+      },
+      {
+        id: 'redis',
+        name: 'Redis',
+        category: 'database',
+        icon: 'fa-bolt',
+        color: 'text-rose-400',
+        desc: 'Almacén de datos en memoria para caché y mensajes.',
+        enabled: true,
+        hostPort: '6379',
+        containerPort: '6379',
+        containerName: 'redis-cache',
+        restart: 'always',
+        image: 'redis:alpine',
+        volumes: ['redisdata:/data']
+      },
+      {
+        id: 'mongodb',
+        name: 'MongoDB',
+        category: 'database',
+        icon: 'fa-leaf',
+        color: 'text-emerald-500',
+        desc: 'Base de datos NoSQL basada en documentos JSON/BSON.',
+        enabled: false,
+        hostPort: '27017',
+        containerPort: '27017',
+        containerName: 'mongo-db',
+        restart: 'unless-stopped',
+        image: 'mongo:7.0',
+        env: {
+          MONGO_INITDB_ROOT_USERNAME: 'admin',
+          MONGO_INITDB_ROOT_PASSWORD: 'SecretMongoPass123!'
+        },
+        volumes: ['mongodata:/data/db']
+      },
+      {
+        id: 'portainer',
+        name: 'Portainer UI',
+        category: 'tools',
+        icon: 'fa-cubes',
+        color: 'text-cyan-300',
+        desc: 'Interfaz gráfica ligera para gestionar Docker y Kubernetes.',
+        enabled: true,
+        hostPort: '9443',
+        containerPort: '9443',
+        containerName: 'portainer',
+        restart: 'always',
+        image: 'portainer/portainer-ce:latest',
+        volumes: [
+          '/var/run/docker.sock:/var/run/docker.sock',
+          'portainer_data:/data'
+        ]
+      },
+      {
+        id: 'dozzle',
+        name: 'Dozzle',
+        category: 'monitoring',
+        icon: 'fa-list-check',
+        color: 'text-teal-400',
+        desc: 'Visor de logs de contenedores Docker en tiempo real en el navegador.',
+        enabled: false,
+        hostPort: '8888',
+        containerPort: '8080',
+        containerName: 'dozzle-logs',
+        restart: 'unless-stopped',
+        image: 'amir20/dozzle:latest',
+        volumes: ['/var/run/docker.sock:/var/run/docker.sock:ro']
+      },
+      {
+        id: 'prometheus',
+        name: 'Prometheus',
+        category: 'monitoring',
+        icon: 'fa-chart-line',
+        color: 'text-orange-400',
+        desc: 'Sistema de monitoreo de métricas y alerta de código abierto.',
+        enabled: false,
+        hostPort: '9090',
+        containerPort: '9090',
+        containerName: 'prometheus',
+        restart: 'unless-stopped',
+        image: 'prom/prometheus:latest',
+        volumes: ['./prometheus.yml:/etc/prometheus/prometheus.yml:ro']
+      },
+      {
+        id: 'grafana',
+        name: 'Grafana',
+        category: 'monitoring',
+        icon: 'fa-chart-pie',
+        color: 'text-amber-500',
+        desc: 'Plataforma líder para análisis y dashboards visuales de métricas.',
+        enabled: false,
+        hostPort: '3000',
+        containerPort: '3000',
+        containerName: 'grafana',
+        restart: 'unless-stopped',
+        image: 'grafana/grafana:latest',
+        volumes: ['grafana_data:/var/lib/grafana']
+      },
+      {
+        id: 'uptime-kuma',
+        name: 'Uptime Kuma',
+        category: 'monitoring',
+        icon: 'fa-heartbeat',
+        color: 'text-emerald-400',
+        desc: 'Monitoreo self-hosted de estado de servicios con páginas públicas.',
+        enabled: true,
+        hostPort: '3001',
+        containerPort: '3001',
+        containerName: 'uptime-kuma',
+        restart: 'always',
+        image: 'louislam/uptime-kuma:1',
+        volumes: ['uptime-kuma-data:/app/data']
+      },
+      {
+        id: 'vaultwarden',
+        name: 'Vaultwarden',
+        category: 'tools',
+        icon: 'fa-shield-halved',
+        color: 'text-blue-500',
+        desc: 'Servidor ligero compatible con Bitwarden escrito en Rust.',
+        enabled: false,
+        hostPort: '8080',
+        containerPort: '80',
+        containerName: 'vaultwarden',
+        restart: 'always',
+        image: 'vaultwarden/server:latest',
+        env: {
+          WEBSOCKET_ENABLED: 'true'
+        },
+        volumes: ['vw-data:/data']
+      },
+      {
+        id: 'adminer',
+        name: 'Adminer',
+        category: 'tools',
+        icon: 'fa-screwdriver-wrench',
+        color: 'text-indigo-400',
+        desc: 'Gestor web ligero para bases de datos MySQL, Postgres, SQLite.',
+        enabled: false,
+        hostPort: '8081',
+        containerPort: '8080',
+        containerName: 'adminer-ui',
+        restart: 'unless-stopped',
+        image: 'adminer:latest'
+      },
+      {
+        id: 'nextcloud',
+        name: 'Nextcloud',
+        category: 'tools',
+        icon: 'fa-cloud',
+        color: 'text-sky-400',
+        desc: 'Plataforma privada de almacenamiento en la nube e intercambio de archivos.',
+        enabled: false,
+        hostPort: '8082',
+        containerPort: '80',
+        containerName: 'nextcloud-app',
+        restart: 'always',
+        image: 'nextcloud:latest',
+        volumes: ['nextcloud_data:/var/www/html']
+      }
+    ];
+
+    let activeCategory = 'all';
+
+    // Initialize application
+    document.addEventListener('DOMContentLoaded', () => {
+      renderServices();
+      updateYaml();
+    });
+
+    // Render list of services
+    function renderServices() {
+      const container = document.getElementById('servicesContainer');
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+      
+      container.innerHTML = '';
+
+      const filtered = SERVICES_DATA.filter(svc => {
+        const matchesCategory = activeCategory === 'all' || svc.category === activeCategory;
+        const matchesSearch = svc.name.toLowerCase().includes(searchTerm) || 
+                              svc.desc.toLowerCase().includes(searchTerm) ||
+                              svc.id.toLowerCase().includes(searchTerm);
+        return matchesCategory && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 text-center bg-slate-900/60 rounded-xl border border-slate-800 text-slate-500">
+            <i class="fa-solid fa-filter-circle-xmark text-3xl mb-2 text-slate-600"></i>
+            <p class="text-sm font-medium">No se encontraron servicios que coincidan con la búsqueda.</p>
+          </div>
+        `;
+        return;
+      }
+
+      filtered.forEach(svc => {
+        const card = document.createElement('div');
+        card.className = `p-4 rounded-xl border transition-all duration-200 ${
+          svc.enabled 
+            ? 'bg-slate-900 border-cyan-500/60 shadow-lg shadow-cyan-950/20' 
+            : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+        }`;
+        
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-3">
+            
+            <!-- Checkbox & Info -->
+            <div class="flex items-start gap-3 flex-1">
+              <input type="checkbox" id="check_${svc.id}" ${svc.enabled ? 'checked' : ''} 
+                onchange="toggleService('${svc.id}')"
+                class="mt-1 w-4 h-4 rounded bg-slate-950 border-slate-700 text-cyan-500 focus:ring-cyan-500 focus:ring-offset-slate-900 cursor-pointer">
+              
+              <div class="flex-1">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <i class="fa-solid ${svc.icon} ${svc.color}"></i>
+                  <label for="check_${svc.id}" class="font-bold text-white text-sm cursor-pointer hover:text-cyan-400 transition-colors">${svc.name}</label>
+                  <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700/60 uppercase tracking-wider">${svc.category}</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-1">${svc.desc}</p>
+                <div class="text-[11px] font-mono text-slate-500 mt-1">Image: <span class="text-slate-400">${svc.image}</span></div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Configuration options (if enabled) -->
+          ${svc.enabled ? `
+            <div class="mt-3 pt-3 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-medium text-slate-400 mb-1">Mapeo de Puerto (Host:Contenedor)</label>
+                <div class="flex items-center gap-1.5">
+                  <input type="text" value="${svc.hostPort}" onchange="updateServicePort('${svc.id}', this.value)" 
+                    class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-md px-2.5 py-1.5 font-mono focus:border-cyan-500 focus:outline-none">
+                  <span class="text-slate-500 font-mono text-xs">:</span>
+                  <span class="text-slate-400 font-mono text-xs px-2 py-1 bg-slate-950 rounded border border-slate-800/60">${svc.containerPort}</span>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-medium text-slate-400 mb-1">Nombre de Contenedor</label>
+                <input type="text" value="${svc.containerName}" onchange="updateServiceName('${svc.id}', this.value)"
+                  class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-md px-2.5 py-1.5 font-mono focus:border-cyan-500 focus:outline-none">
+              </div>
+            </div>
+          ` : ''}
+        `;
+
+        container.appendChild(card);
+      });
+
+      updateSelectedCounter();
+    }
+
+    // Toggle service state
+    function toggleService(id) {
+      const svc = SERVICES_DATA.find(s => s.id === id);
+      if (svc) {
+        svc.enabled = !svc.enabled;
+        renderServices();
+        updateYaml();
+      }
+    }
+
+    // Update port
+    function updateServicePort(id, newPort) {
+      const svc = SERVICES_DATA.find(s => s.id === id);
+      if (svc) {
+        svc.hostPort = newPort.trim() || svc.containerPort;
+        updateYaml();
+      }
+    }
+
+    // Update container name
+    function updateServiceName(id, newName) {
+      const svc = SERVICES_DATA.find(s => s.id === id);
+      if (svc) {
+        svc.containerName = newName.trim() || svc.id;
+        updateYaml();
+      }
+    }
+
+    // Select/Unselect All
+    function selectAll(status) {
+      SERVICES_DATA.forEach(svc => svc.enabled = status);
+      renderServices();
+      updateYaml();
+    }
+
+    // Filter by Category
+    function setCategory(cat) {
+      activeCategory = cat;
+      document.querySelectorAll('.cat-btn').forEach(btn => {
+        btn.classList.remove('active', 'bg-cyan-950', 'text-cyan-400', 'border-cyan-800/80');
+        btn.classList.add('bg-slate-800', 'text-slate-400', 'border-slate-700/60');
+      });
+
+      event.target.classList.remove('bg-slate-800', 'text-slate-400', 'border-slate-700/60');
+      event.target.classList.add('active', 'bg-cyan-950', 'text-cyan-400', 'border-cyan-800/80');
+
+      renderServices();
+    }
+
+    // Text Search Filter
+    function filterServices() {
+      renderServices();
+    }
+
+    // Counter badge update
+    function updateSelectedCounter() {
+      const count = SERVICES_DATA.filter(s => s.enabled).length;
+      document.getElementById('selectedCount').innerText = `${count} de ${SERVICES_DATA.length} servicios activados`;
+    }
+
+    // Generate Docker Compose YAML dynamically
+    function generateYamlString() {
+      const activeServices = SERVICES_DATA.filter(s => s.enabled);
+      
+      if (activeServices.length === 0) {
+        return `# Docker Compose Stack
+# ----------------------------------------------------
+# No hay servicios seleccionados.
+# Selecciona al menos un servicio en el panel izquierdo.`;
+      }
+
+      let yaml = `version: '3.8'\n\nservices:\n`;
+
+      const volumesList = new Set();
+
+      activeServices.forEach(svc => {
+        yaml += `  ${svc.id}:\n`;
+        yaml += `    image: ${svc.image}\n`;
+        yaml += `    container_name: ${svc.containerName}\n`;
+        yaml += `    restart: ${svc.restart}\n`;
+
+        if (svc.command) {
+          yaml += `    command: ${svc.command}\n`;
+        }
+
+        if (svc.hostPort && svc.containerPort) {
+          yaml += `    ports:\n`;
+          yaml += `      - "${svc.hostPort}:${svc.containerPort}"\n`;
+        }
+
+        if (svc.env) {
+          yaml += `    environment:\n`;
+          Object.entries(svc.env).forEach(([k, v]) => {
+            yaml += `      ${k}: "${v}"\n`;
+          });
+        }
+
+        if (svc.volumes && svc.volumes.length > 0) {
+          yaml += `    volumes:\n`;
+          svc.volumes.forEach(vol => {
+            yaml += `      - ${vol}\n`;
+            // Check if volume is a named volume (doesn't start with . or /)
+            if (!vol.startsWith('.') && !vol.startsWith('/') && vol.includes(':')) {
+              const namedVol = vol.split(':')[0];
+              volumesList.add(namedVol);
+            }
+          });
+        }
+
+        yaml += `\n`;
+      });
+
+      if (volumesList.size > 0) {
+        yaml += `volumes:\n`;
+        volumesList.forEach(vol => {
+          yaml += `  ${vol}:\n`;
+        });
+      }
+
+      return yaml.trim();
+    }
+
+    // Update terminal code display and re-trigger Prism syntax highlighter
+    function updateYaml() {
+      const yamlContent = generateYamlString();
+      const codeElem = document.getElementById('yamlCode');
+      codeElem.textContent = yamlContent;
+      if (window.Prism) {
+        Prism.highlightElement(codeElem);
+      }
+    }
+
+    // Copy YAML to Clipboard
+    function copyToClipboard() {
+      const content = generateYamlString();
+      navigator.clipboard.writeText(content).then(() => {
+        const btnText = document.getElementById('copyBtnText');
+        btnText.innerText = '¡Copiado!';
+        showToast('Copiado al portapapeles con éxito', 'success');
+        setTimeout(() => {
+          btnText.innerText = 'Copiar';
+        }, 2000);
+      }).catch(err => {
+        showToast('Error al copiar al portapapeles', 'error');
+      });
+    }
+
+    // Download docker-compose.yml file
+    function downloadYaml() {
+      const content = generateYamlString();
+      const blob = new Blob([content], { type: 'text/yaml;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'docker-compose.yml');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      showToast('Archivo docker-compose.yml descargado', 'success');
+    }
+
+    // Modal Control Functions
+    function openModal() {
+      const modal = document.getElementById('coffeeModal');
+      const card = document.getElementById('modalCard');
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        card.classList.remove('scale-95', 'opacity-0');
+        card.classList.add('scale-100', 'opacity-100');
+      }, 10);
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('coffeeModal');
+      const card = document.getElementById('modalCard');
+      card.classList.remove('scale-100', 'opacity-100');
+      card.classList.add('scale-95', 'opacity-0');
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 200);
+    }
+
+    function selectCoffeeAmount(amount) {
+      document.querySelectorAll('.coffee-amount-btn').forEach(btn => {
+        btn.classList.remove('active', 'bg-amber-400', 'text-slate-950', 'border-amber-400', 'shadow-md');
+        btn.classList.add('bg-slate-800', 'text-slate-200', 'border-slate-700');
+      });
+
+      event.currentTarget.classList.remove('bg-slate-800', 'text-slate-200', 'border-slate-700');
+      event.currentTarget.classList.add('active', 'bg-amber-400', 'text-slate-950', 'border-amber-400', 'shadow-md');
+    }
+
+    // Toast Notification System
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      
+      const icon = type === 'success' ? 'fa-circle-check text-emerald-400' : 'fa-circle-info text-cyan-400';
+      
+      toast.className = `flex items-center gap-3 px-4 py-3 bg-slate-900/95 border border-slate-700 text-slate-100 text-xs font-medium rounded-xl shadow-2xl backdrop-blur-md transform transition-all duration-300 translate-y-4 opacity-0 pointer-events-auto`;
+      toast.innerHTML = `
+        <i class="fa-solid ${icon} text-base"></i>
+        <span>${message}</span>
+      `;
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-4', 'opacity-0');
+        toast.classList.add('translate-y-0', 'opacity-100');
+      }, 10);
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-4', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
