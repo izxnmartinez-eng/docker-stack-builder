@@ -234,27 +234,31 @@
           <p class="text-xs text-slate-400 mt-1">Si este generador de Docker Stack te ha ahorrado tiempo en tus servidores, considera invitarme a un café para seguir mejorándolo.</p>
         </div>
 
-        <!-- Donation Amount Options -->
+        <!-- Donation Amount Options (Radio / Tabs selector) -->
         <div class="grid grid-cols-3 gap-2.5 py-2">
-          <button onclick="selectCoffeeAmount(3)" class="coffee-amount-btn py-2.5 rounded-xl bg-slate-800 hover:bg-amber-400 hover:text-slate-950 font-bold border border-slate-700 hover:border-amber-400 text-sm text-slate-200 transition-all flex flex-col items-center gap-0.5">
+          <button onclick="selectCoffeeAmount(3, '1 café ($3 USD)', this)" class="coffee-amount-btn py-2.5 rounded-xl bg-slate-800 hover:bg-amber-400 hover:text-slate-950 font-bold border border-slate-700 hover:border-amber-400 text-sm text-slate-200 transition-all flex flex-col items-center gap-0.5">
             <span>☕ 1 Café</span>
             <span class="text-xs font-normal opacity-80">$3 USD</span>
           </button>
-          <button onclick="selectCoffeeAmount(6)" class="coffee-amount-btn active py-2.5 rounded-xl bg-amber-400 text-slate-950 font-bold border border-amber-400 text-sm transition-all flex flex-col items-center gap-0.5 shadow-md shadow-amber-400/20">
+          <button onclick="selectCoffeeAmount(6, '2 cafés ($6 USD)', this)" class="coffee-amount-btn active py-2.5 rounded-xl bg-amber-400 text-slate-950 font-bold border border-amber-400 text-sm transition-all flex flex-col items-center gap-0.5 shadow-md shadow-amber-400/20">
             <span>☕☕ 2 Cafés</span>
             <span class="text-xs font-semibold opacity-90">$6 USD</span>
           </button>
-          <button onclick="selectCoffeeAmount(15)" class="coffee-amount-btn py-2.5 rounded-xl bg-slate-800 hover:bg-amber-400 hover:text-slate-950 font-bold border border-slate-700 hover:border-amber-400 text-sm text-slate-200 transition-all flex flex-col items-center gap-0.5">
+          <button onclick="selectCoffeeAmount(15, 'Super Stack ($15 USD)', this)" class="coffee-amount-btn py-2.5 rounded-xl bg-slate-800 hover:bg-amber-400 hover:text-slate-950 font-bold border border-slate-700 hover:border-amber-400 text-sm text-slate-200 transition-all flex flex-col items-center gap-0.5">
             <span>🚀 Super Stack</span>
             <span class="text-xs font-normal opacity-80">$15 USD</span>
           </button>
         </div>
 
-        <!-- Action Button -->
-        <a href="https://buymeacoffee.com" target="_blank" onclick="closeModal()" class="w-full py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-extrabold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-400/20 transform hover:-translate-y-0.5">
-          <i class="fa-solid fa-heart text-rose-700"></i>
-          <span>Invitar un café vía BuyMeACoffee</span>
-        </a>
+        <!-- Action Button & Official Widget -->
+        <div class="flex flex-col items-center justify-center gap-3 pt-1">
+          <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="izxnmartini" data-color="#FFDD00" data-emoji="" data-font="Comic" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#ffffff"></script>
+          
+          <a id="bmcPrimaryBtn" href="https://buymeacoffee.com/izxnmartini" target="_blank" rel="noopener noreferrer" onclick="closeModal()" class="w-full py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-extrabold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-400/20 transform hover:-translate-y-0.5">
+            <i class="fa-solid fa-heart text-rose-700"></i>
+            <span id="bmcBtnText">Invitar 2 cafés ($6 USD) vía BuyMeACoffee</span>
+          </a>
+        </div>
 
         <p class="text-[11px] text-slate-500">¡Muchas gracias por apoyar el software Open Source!</p>
       </div>
@@ -776,14 +780,30 @@
       }, 200);
     }
 
-    function selectCoffeeAmount(amount) {
+    function selectCoffeeAmount(amount, label, clickedBtn) {
+      // 1. Reset all radio/tab options visually
       document.querySelectorAll('.coffee-amount-btn').forEach(btn => {
         btn.classList.remove('active', 'bg-amber-400', 'text-slate-950', 'border-amber-400', 'shadow-md');
         btn.classList.add('bg-slate-800', 'text-slate-200', 'border-slate-700');
       });
 
-      event.currentTarget.classList.remove('bg-slate-800', 'text-slate-200', 'border-slate-700');
-      event.currentTarget.classList.add('active', 'bg-amber-400', 'text-slate-950', 'border-amber-400', 'shadow-md');
+      // 2. Highlight clicked option
+      const targetBtn = clickedBtn || event?.currentTarget;
+      if (targetBtn) {
+        targetBtn.classList.remove('bg-slate-800', 'text-slate-200', 'border-slate-700');
+        targetBtn.classList.add('active', 'bg-amber-400', 'text-slate-950', 'border-amber-400', 'shadow-md');
+      }
+
+      // 3. Update primary link href & text dynamically
+      const primaryBtn = document.getElementById('bmcPrimaryBtn');
+      const btnText = document.getElementById('bmcBtnText');
+      if (primaryBtn) {
+        // BuyMeACoffee link supporting quantity parameter or note
+        primaryBtn.href = `https://buymeacoffee.com/izxnmartini?amount=${amount}`;
+      }
+      if (btnText && label) {
+        btnText.innerText = `Invitar ${label} vía BuyMeACoffee`;
+      }
     }
 
     // Toast Notification System
