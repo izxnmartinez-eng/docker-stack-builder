@@ -100,6 +100,66 @@
       100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
     }
   </style>
+
+  <script>
+    const i18n = {
+      en: {
+        "title": "Docker Stack Builder",
+        "coffee": "Buy me a coffee",
+        "selectAll": "Select all",
+        "deselect": "Deselect",
+        "search": "Search service (e.g. postgres, nginx, uptime)...",
+        "all": "All",
+        "web": "Web & Proxy",
+        "database": "Databases",
+        "monitoring": "Monitoring",
+        "tools": "Tools",
+        "copy": "Copy",
+        "download": "Download",
+        "syntaxValidated": "YAML syntax validated"
+      },
+      es: {
+        "title": "Docker Stack Builder",
+        "coffee": "Invítame a un café",
+        "selectAll": "Seleccionar todos",
+        "deselect": "Desmarcar",
+        "search": "Buscar servicio (ej. postgres, nginx, uptime)...",
+        "all": "Todos",
+        "web": "Web & Proxy",
+        "database": "Bases de Datos",
+        "monitoring": "Monitoreo",
+        "tools": "Herramientas",
+        "copy": "Copiar",
+        "download": "Descargar",
+        "syntaxValidated": "Sintaxis YAML validada"
+      },
+      de: {
+        "title": "Docker Stack Builder",
+        "coffee": "Kauf mir einen Kaffee",
+        "selectAll": "Alle auswählen",
+        "deselect": "Auswahl aufheben",
+        "search": "Dienst suchen (z.B. postgres, nginx, uptime)...",
+        "all": "Alle",
+        "web": "Web & Proxy",
+        "database": "Datenbanken",
+        "monitoring": "Überwachung",
+        "tools": "Werkzeuge",
+        "copy": "Kopieren",
+        "download": "Herunterladen",
+        "syntaxValidated": "YAML-Syntax validiert"
+      }
+    };
+
+    function setLanguage(lang) {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (i18n[lang] && i18n[lang][key]) {
+          el.innerText = i18n[lang][key];
+        }
+      });
+      localStorage.setItem('lang', lang);
+    }
+  </script>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans min-h-screen antialiased flex flex-col selection:bg-cyan-500 selection:text-slate-950">
 
@@ -117,13 +177,18 @@
             <h1 class="text-xl font-bold tracking-tight text-white">Docker Stack Builder</h1>
             <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800/60">v2.4 Live</span>
           </div>
-          <p class="text-xs text-slate-400 font-medium">Generador de docker-compose.yml en tiempo real para SysAdmins</p>
+          <p data-i18n="description" class="text-xs text-slate-400 font-medium">Generador de docker-compose.yml en tiempo real para SysAdmins</p>
         </div>
       </div>
 
       <!-- Actions Header -->
       <div class="flex items-center gap-3">
-        <button id="coffeeBtn" onclick="openModal()" class="glow-amber bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-4 py-2 rounded-xl text-sm transition-all duration-200 flex items-center gap-2 transform hover:-translate-y-0.5 active:translate-y-0 shadow-md">
+        <select onchange="setLanguage(this.value)" class="bg-slate-800 text-slate-200 text-sm rounded-lg px-2 py-1 border border-slate-700">
+          <option value="en">English</option>
+          <option value="es" selected>Español</option>
+          <option value="de">Deutsch</option>
+        </select>
+        <button id="coffeeBtn" onclick="openModal()" data-i18n="coffee" class="glow-amber bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-4 py-2 rounded-xl text-sm transition-all duration-200 flex items-center gap-2 transform hover:-translate-y-0.5 active:translate-y-0 shadow-md">
           <i class="fa-solid fa-mug-hot text-base text-amber-900"></i>
           <span>Invítame a un café</span>
         </button>
@@ -157,24 +222,24 @@
           <div class="flex flex-col sm:flex-row gap-3 items-center justify-between">
             <div class="relative w-full">
               <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
-              <input type="text" id="searchInput" oninput="filterServices()" placeholder="Buscar servicio (ej. postgres, nginx, uptime)..." 
+              <input type="text" id="searchInput" oninput="filterServices()" data-i18n="search" placeholder="Buscar servicio (ej. postgres, nginx, uptime)..." 
                 class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-sm rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors">
             </div>
-            <button onclick="selectAll(true)" class="text-xs text-slate-400 hover:text-cyan-400 transition-colors whitespace-nowrap px-3 py-2 rounded-lg bg-slate-800/60 border border-slate-700/50 hover:bg-slate-800">
+            <button onclick="selectAll(true)" data-i18n="selectAll" class="text-xs text-slate-400 hover:text-cyan-400 transition-colors whitespace-nowrap px-3 py-2 rounded-lg bg-slate-800/60 border border-slate-700/50 hover:bg-slate-800">
               <i class="fa-solid fa-check-double mr-1"></i> Seleccionar todos
             </button>
-            <button onclick="selectAll(false)" class="text-xs text-slate-400 hover:text-rose-400 transition-colors whitespace-nowrap px-3 py-2 rounded-lg bg-slate-800/60 border border-slate-700/50 hover:bg-slate-800">
+            <button onclick="selectAll(false)" data-i18n="deselect" class="text-xs text-slate-400 hover:text-rose-400 transition-colors whitespace-nowrap px-3 py-2 rounded-lg bg-slate-800/60 border border-slate-700/50 hover:bg-slate-800">
               <i class="fa-solid fa-xmark mr-1"></i> Desmarcar
             </button>
           </div>
 
           <!-- Category Badges -->
           <div class="flex flex-wrap gap-1.5 pt-1" id="categoryFilters">
-            <button onclick="setCategory('all')" class="cat-btn active px-3 py-1 text-xs font-medium rounded-lg bg-cyan-950 text-cyan-400 border border-cyan-800/80 transition-all">Todos</button>
-            <button onclick="setCategory('web')" class="cat-btn px-3 py-1 text-xs font-medium rounded-lg bg-slate-800 text-slate-400 border border-slate-700/60 hover:text-slate-200 transition-all">Web & Proxy</button>
-            <button onclick="setCategory('database')" class="cat-btn px-3 py-1 text-xs font-medium rounded-lg bg-slate-800 text-slate-400 border border-slate-700/60 hover:text-slate-200 transition-all">Bases de Datos</button>
-            <button onclick="setCategory('monitoring')" class="cat-btn px-3 py-1 text-xs font-medium rounded-lg bg-slate-800 text-slate-400 border border-slate-700/60 hover:text-slate-200 transition-all">Monitoreo</button>
-            <button onclick="setCategory('tools')" class="cat-btn px-3 py-1 text-xs font-medium rounded-lg bg-slate-800 text-slate-400 border border-slate-700/60 hover:text-slate-200 transition-all">Herramientas</button>
+            <button onclick="setCategory('all')" data-i18n="all" class="cat-btn active px-3 py-1 text-xs font-medium rounded-lg bg-cyan-950 text-cyan-400 border border-cyan-800/80 transition-all">Todos</button>
+            <button onclick="setCategory('web')" data-i18n="web" class="cat-btn px-3 py-1 text-xs font-medium rounded-lg bg-slate-800 text-slate-400 border border-slate-700/60 hover:text-slate-200 transition-all">Web & Proxy</button>
+            <button onclick="setCategory('database')" data-i18n="database" class="cat-btn px-3 py-1 text-xs font-medium rounded-lg bg-slate-800 text-slate-400 border border-slate-700/60 hover:text-slate-200 transition-all">Bases de Datos</button>
+            <button onclick="setCategory('monitoring')" data-i18n="monitoring" class="cat-btn px-3 py-1 text-xs font-medium rounded-lg bg-slate-800 text-slate-400 border border-slate-700/60 hover:text-slate-200 transition-all">Monitoreo</button>
+            <button onclick="setCategory('tools')" data-i18n="tools" class="cat-btn px-3 py-1 text-xs font-medium rounded-lg bg-slate-800 text-slate-400 border border-slate-700/60 hover:text-slate-200 transition-all">Herramientas</button>
           </div>
         </div>
 
@@ -203,11 +268,11 @@
             <div class="flex items-center gap-2">
               <button onclick="copyToClipboard()" title="Copiar al portapapeles" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 active:scale-95">
                 <i class="fa-regular fa-copy text-cyan-400"></i>
-                <span id="copyBtnText">Copiar</span>
+                <span id="copyBtnText" data-i18n="copy">Copiar</span>
               </button>
               <button onclick="downloadYaml()" title="Descargar docker-compose.yml" class="px-2.5 py-1 bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold rounded-md text-xs transition-colors flex items-center gap-1.5 active:scale-95 shadow-md shadow-cyan-600/20">
                 <i class="fa-solid fa-download text-slate-950"></i>
-                <span>Descargar</span>
+                <span data-i18n="download">Descargar</span>
               </button>
             </div>
           </div>
@@ -221,7 +286,7 @@
           <div class="bg-slate-950/80 px-4 py-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
             <div class="flex items-center gap-2">
               <i class="fa-solid fa-circle-check text-emerald-400"></i>
-              <span>Sintaxis YAML validada</span>
+              <span data-i18n="syntaxValidated">Sintaxis YAML validada</span>
             </div>
             <span>UTF-8 • Compose v3.8</span>
           </div>
