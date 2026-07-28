@@ -104,7 +104,7 @@
   <script>
     const i18n = {
       en: {
-        "title": "Docker Stack Builder",
+        "description": "Real-time docker-compose.yml generator for SysAdmins",
         "coffee": "Buy me a coffee",
         "selectAll": "Select all",
         "deselect": "Deselect",
@@ -116,10 +116,13 @@
         "tools": "Tools",
         "copy": "Copy",
         "download": "Download",
-        "syntaxValidated": "YAML syntax validated"
+        "syntaxValidated": "YAML syntax validated",
+        "selectedServices": "services selected",
+        "donateTitle": "Support the project! ☕",
+        "donateDesc": "If this Docker Stack generator has saved you time on your servers, consider buying me a coffee to keep improving it."
       },
       es: {
-        "title": "Docker Stack Builder",
+        "description": "Generador de docker-compose.yml en tiempo real para SysAdmins",
         "coffee": "Invítame a un café",
         "selectAll": "Seleccionar todos",
         "deselect": "Desmarcar",
@@ -131,10 +134,13 @@
         "tools": "Herramientas",
         "copy": "Copiar",
         "download": "Descargar",
-        "syntaxValidated": "Sintaxis YAML validada"
+        "syntaxValidated": "Sintaxis YAML validada",
+        "selectedServices": "servicios seleccionados",
+        "donateTitle": "¡Apoya el proyecto! ☕",
+        "donateDesc": "Si este generador de Docker Stack te ha ahorrado tiempo en tus servidores, considera invitarme a un café para seguir mejorándolo."
       },
       de: {
-        "title": "Docker Stack Builder",
+        "description": "Echtzeit docker-compose.yml Generator für Systemadministratoren",
         "coffee": "Kauf mir einen Kaffee",
         "selectAll": "Alle auswählen",
         "deselect": "Auswahl aufheben",
@@ -146,7 +152,10 @@
         "tools": "Werkzeuge",
         "copy": "Kopieren",
         "download": "Herunterladen",
-        "syntaxValidated": "YAML-Syntax validiert"
+        "syntaxValidated": "YAML-Syntax validiert",
+        "selectedServices": "Dienste ausgewählt",
+        "donateTitle": "Unterstütze das Projekt! ☕",
+        "donateDesc": "Wenn dir dieser Docker-Stack-Generator Zeit auf deinen Servern gespart hat, erwäge, mir einen Kaffee auszugeben, um ihn weiter zu verbessern."
       }
     };
 
@@ -157,8 +166,20 @@
           el.innerText = i18n[lang][key];
         }
       });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (i18n[lang] && i18n[lang][key]) {
+          el.setAttribute('placeholder', i18n[lang][key]);
+        }
+      });
       localStorage.setItem('lang', lang);
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedLang = localStorage.getItem('lang') || 'en';
+      document.getElementById('langSelector').value = savedLang;
+      setLanguage(savedLang);
+    });
   </script>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans min-h-screen antialiased flex flex-col selection:bg-cyan-500 selection:text-slate-950">
@@ -183,9 +204,9 @@
 
       <!-- Actions Header -->
       <div class="flex items-center gap-3">
-        <select onchange="setLanguage(this.value)" class="bg-slate-800 text-slate-200 text-sm rounded-lg px-2 py-1 border border-slate-700">
+        <select id="langSelector" onchange="setLanguage(this.value)" class="bg-slate-800 text-slate-200 text-sm rounded-lg px-2 py-1 border border-slate-700">
           <option value="en">English</option>
-          <option value="es" selected>Español</option>
+          <option value="es">Español</option>
           <option value="de">Deutsch</option>
         </select>
         <button id="coffeeBtn" onclick="openModal()" data-i18n="coffee" class="glow-amber bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-4 py-2 rounded-xl text-sm transition-all duration-200 flex items-center gap-2 transform hover:-translate-y-0.5 active:translate-y-0 shadow-md">
