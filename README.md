@@ -8,6 +8,10 @@
 
 ---
 
+![Docker Stack Builder Preview](preview.png)
+
+---
+
 ## 🚀 Live Demo
 
 Try the app directly in your browser:  
