@@ -118,8 +118,9 @@
         "download": "Download",
         "syntaxValidated": "YAML syntax validated",
         "selectedServices": "services selected",
-        "donateTitle": "Support the project! ☕",
-        "donateDesc": "If this Docker Stack generator has saved you time on your servers, consider buying me a coffee to keep improving it."
+        "instructions": "Select your services, customize their ports and get the YAML ready for production.",
+        "portMapping": "Port Mapping (Host:Container)",
+        "containerName": "Container Name"
       },
       es: {
         "description": "Generador de docker-compose.yml en tiempo real para SysAdmins",
@@ -136,8 +137,9 @@
         "download": "Descargar",
         "syntaxValidated": "Sintaxis YAML validada",
         "selectedServices": "servicios seleccionados",
-        "donateTitle": "¡Apoya el proyecto! ☕",
-        "donateDesc": "Si este generador de Docker Stack te ha ahorrado tiempo en tus servidores, considera invitarme a un café para seguir mejorándolo."
+        "instructions": "Selecciona tus servicios, personaliza sus puertos y obtén el YAML listo para producción.",
+        "portMapping": "Mapeo de Puerto (Host:Contenedor)",
+        "containerName": "Nombre de Contenedor"
       },
       de: {
         "description": "Echtzeit docker-compose.yml Generator für Systemadministratoren",
@@ -154,9 +156,41 @@
         "download": "Herunterladen",
         "syntaxValidated": "YAML-Syntax validiert",
         "selectedServices": "Dienste ausgewählt",
-        "donateTitle": "Unterstütze das Projekt! ☕",
-        "donateDesc": "Wenn dir dieser Docker-Stack-Generator Zeit auf deinen Servern gespart hat, erwäge, mir einen Kaffee auszugeben, um ihn weiter zu verbessern."
+        "instructions": "Wähle deine Dienste aus, passe ihre Ports an und erhalte das YAML fertig für die Produktion.",
+        "portMapping": "Port-Zuordnung (Host:Container)",
+        "containerName": "Container-Name"
       }
+    };
+
+    const SERVICES_TRANSLATIONS = {
+        nginx: { en: "Nginx", es: "Nginx", de: "Nginx" },
+        nginx_desc: { en: "High-performance web server and reverse proxy.", es: "Servidor Web y Proxy Inverso de alto rendimiento.", de: "Hochleistungs-Webserver und Reverse-Proxy." },
+        traefik: { en: "Traefik", es: "Traefik", de: "Traefik" },
+        traefik_desc: { en: "Modern HTTP edge router and reverse proxy for microservices.", es: "Router de borde HTTP moderno y proxy inverso para microservicios.", de: "Moderner HTTP-Edge-Router und Reverse-Proxy für Microservices." },
+        postgres: { en: "PostgreSQL", es: "PostgreSQL", de: "PostgreSQL" },
+        postgres_desc: { en: "Powerful object-relational database.", es: "Potente base de datos relacional orientada a objetos.", de: "Leistungsstarke objektrelationale Datenbank." },
+        mysql: { en: "MySQL / MariaDB", es: "MySQL / MariaDB", de: "MySQL / MariaDB" },
+        mysql_desc: { en: "Popular relational database management system.", es: "Sistema de gestión de bases de datos relacional popular.", de: "Beliebtes relationales Datenbankverwaltungssystem." },
+        redis: { en: "Redis", es: "Redis", de: "Redis" },
+        redis_desc: { en: "In-memory data store for cache and messages.", es: "Almacén de datos en memoria para caché y mensajes.", de: "In-Memory-Datenspeicher für Cache und Nachrichten." },
+        mongodb: { en: "MongoDB", es: "MongoDB", de: "MongoDB" },
+        mongodb_desc: { en: "JSON/BSON document-based NoSQL database.", es: "Base de datos NoSQL basada en documentos JSON/BSON.", de: "JSON/BSON-dokumentenbasierte NoSQL-Datenbank." },
+        portainer: { en: "Portainer UI", es: "Portainer UI", de: "Portainer UI" },
+        portainer_desc: { en: "Lightweight GUI to manage Docker and Kubernetes.", es: "Interfaz gráfica ligera para gestionar Docker y Kubernetes.", de: "Leichte GUI zur Verwaltung von Docker und Kubernetes." },
+        dozzle: { en: "Dozzle", es: "Dozzle", de: "Dozzle" },
+        dozzle_desc: { en: "Real-time Docker container log viewer.", es: "Visor de logs de contenedores Docker en tiempo real.", de: "Echtzeit-Docker-Container-Log-Viewer." },
+        prometheus: { en: "Prometheus", es: "Prometheus", de: "Prometheus" },
+        prometheus_desc: { en: "Open-source metrics monitoring and alerting system.", es: "Sistema de monitoreo de métricas y alerta de código abierto.", de: "Open-Source-Metrik-Überwachungs- und Warnsystem." },
+        grafana: { en: "Grafana", es: "Grafana", de: "Grafana" },
+        grafana_desc: { en: "Leading platform for analytics and visualization dashboards.", es: "Plataforma líder para análisis y dashboards visuales.", de: "Führende Plattform für Analyse- und Visualisierungs-Dashboards." },
+        uptime_kuma: { en: "Uptime Kuma", es: "Uptime Kuma", de: "Uptime Kuma" },
+        uptime_kuma_desc: { en: "Self-hosted monitoring tool.", es: "Herramienta de monitoreo autoalojada.", de: "Selbstgehostetes Überwachungstool." },
+        vaultwarden: { en: "Vaultwarden", es: "Vaultwarden", de: "Vaultwarden" },
+        vaultwarden_desc: { en: "Lightweight Bitwarden-compatible server.", es: "Servidor ligero compatible con Bitwarden.", de: "Leichter Bitwarden-kompatibler Server." },
+        adminer: { en: "Adminer", es: "Adminer", de: "Adminer" },
+        adminer_desc: { en: "Lightweight database management tool.", es: "Herramienta de gestión de bases de datos ligera.", de: "Leichtes Datenbankverwaltungstool." },
+        nextcloud: { en: "Nextcloud", es: "Nextcloud", de: "Nextcloud" },
+        nextcloud_desc: { en: "Private cloud storage and file sharing platform.", es: "Plataforma privada de almacenamiento en la nube e intercambio de archivos.", de: "Private Cloud-Speicher- und Dateifreigabeplattform." }
     };
 
     function setLanguage(lang) {
@@ -173,6 +207,8 @@
         }
       });
       localStorage.setItem('lang', lang);
+      renderServices();
+      updateSelectedCounter();
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -224,7 +260,7 @@
     <div class="mb-6 p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-3">
         <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-green"></span>
-        <span class="text-sm font-medium text-slate-300">Selecciona tus servicios, personaliza sus puertos y obtén el YAML listo para producción.</span>
+        <span class="text-sm font-medium text-slate-300" data-i18n="instructions">Selecciona tus servicios, personaliza sus puertos y obtén el YAML listo para producción.</span>
       </div>
       <div class="flex items-center gap-2 text-xs text-slate-400">
         <i class="fa-solid fa-layer-group text-cyan-400"></i>
